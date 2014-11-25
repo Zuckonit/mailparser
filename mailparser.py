@@ -17,6 +17,7 @@ import email
 from email._parseaddr import AddressList as _AddressList
 
 
+
 def _log_on_error(default=False):
     logger = logging.getLogger(__name__)
     def func(f):
@@ -25,35 +26,43 @@ def _log_on_error(default=False):
             try:
                 return f(*args, **kwargs)
             except Exception as e:
-                log = '{0} error: {1}'.format(f.__name__, e)
-                print log
-                logger.error(log)
+                logger.error('{0} error: {1}'.format(f.__name__, e))
                 return default
         return _func
     return func
 
 
+def to_unicode(str):
+    try:
+        return str.decode('utf-8', 'ignore') if not isinstance(str, unicode) else str
+    except:
+        return str
+
+
 class ParseHeader(object):
     def __init__(self, header):
         header = r"%s"%header
-        header = header.encode('utf-8')
+        header = header.encode('utf-8') if isinstance(header, unicode) else header
         self.msg = email.message_from_string(header)
     
     @_log_on_error(default=None)
     def get_email_from(self):
         efrom = _AddressList(self.msg.get("from")).addresslist
-        return efrom[0][1]
-    
+        efrom = efrom[0][1]
+        return efrom
+
     @_log_on_error(default=[])
     def get_email_to(self, unique=True):
         etos = _AddressList(self.msg.get("to")).addresslist
         etos = [e[1] for e in etos]
+        etos = [to_unicode(t) for t in etos]
         return list(set(etos)) if unique else etos
     
     @_log_on_error(default=[])
     def get_email_cc(self, unique=True):
         ccs = _AddressList(self.msg.get("cc")).addresslist
-        ccs =  [c[1] for c in ccs]
+        ccs = [c[1] for c in ccs]
+        ccs = [to_unicode(c) for c in ccs]
         return list(set(ccs)) if unique else ccs
     
     @_log_on_error(default=[])
@@ -66,7 +75,8 @@ class ParseHeader(object):
     @_log_on_error(default='')
     def get_subject(self):
         subj = self.msg.get('subject')
-        return subj
+        return to_unicode(subj)
+
 
 
 if __name__ == '__main__':
