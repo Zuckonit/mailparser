@@ -16,7 +16,7 @@ from email._parseaddr import AddressList as _AddressList
 
 def header_from_string(s, *args, **kws):
     from email.parser import HeaderParser
-    return HeaderParser().parsestr(s)
+    return HeaderParser(*args, **kws).parsestr(s)
 
 def to_unicode(str):
     try:
